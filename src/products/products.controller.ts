@@ -8,10 +8,12 @@ import {
   Put,
   UseGuards,
   Request,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { Product } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('products')
@@ -28,7 +30,6 @@ export class ProductsController {
     return this.productsService.create(createProductDto, userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   findAll(): Promise<Product[]> {
     return this.productsService.findAll();
@@ -42,16 +43,22 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  update(
+  async update(
     @Param('id') id: string,
-    @Body() updateProductDto: CreateProductDto,
+    @Body() updateProductDto: UpdateProductDto,
+    @Request() req: any, // Captura o request que contém o userId no payload
   ): Promise<Product> {
-    return this.productsService.update(+id, updateProductDto);
+    const userId = req.user.id; // Obtém o userId do token JWT
+
+    return this.productsService.update(+id, updateProductDto, userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string): Promise<void> {
-    return this.productsService.remove(+id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('userId', ParseIntPipe) userId: number,
+  ): Promise<void> {
+    return this.productsService.remove(id, userId);
   }
 }

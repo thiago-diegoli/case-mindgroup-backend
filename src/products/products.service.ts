@@ -1,11 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UsersService } from '../users/users.service';
 import { UpdateProductDto } from './dto/update-product.dto';
-
 @Injectable()
 export class ProductsService {
   constructor(
@@ -31,8 +30,19 @@ export class ProductsService {
     return this.productsRepository.save(product);
   }
 
-  findAll(): Promise<Product[]> {
-    return this.productsRepository.find();
+  async findAll(): Promise<any[]> {
+    const products = await this.productsRepository.find({
+      relations: ['user'],
+    });
+
+    return products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      value: product.value,
+      image: product.image,
+      userId: product.user.id,
+    }));
   }
 
   findOne(id: number): Promise<Product> {
@@ -42,18 +52,24 @@ export class ProductsService {
   async update(
     id: number,
     updateProductDto: UpdateProductDto,
+    userId: number,
   ): Promise<Product> {
     const productToUpdate = await this.productsRepository.findOne({
       where: { id },
+      relations: ['user'],
     });
 
     if (!productToUpdate) {
-      throw new Error('Product not found');
+      throw new NotFoundException('Product not found');
     }
+
+    if (productToUpdate.user.id !== userId) {
+      throw new ForbiddenException('You are not authorized to update this product');
+    }
+
     const updateData: Partial<Product> = {};
     if (updateProductDto.name) updateData.name = updateProductDto.name;
-    if (updateProductDto.description)
-      updateData.description = updateProductDto.description;
+    if (updateProductDto.description) updateData.description = updateProductDto.description;
     if (updateProductDto.value) updateData.value = updateProductDto.value;
 
     if (updateProductDto.image) {
@@ -65,7 +81,20 @@ export class ProductsService {
     return this.findOne(id);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, userId: number): Promise<void> {
+    const product = await this.productsRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
+  
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+  
+    if (product.user.id !== userId) {
+      throw new ForbiddenException('You are not authorized to delete this product');
+    }
+  
     await this.productsRepository.delete(id);
   }
 }

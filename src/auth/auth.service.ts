@@ -24,6 +24,7 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
       name: user.name,
+      id: user.id,
     };
   }
 
@@ -33,6 +34,7 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
       name: user.name,
+      id: user.id,
     };
   }
 }
