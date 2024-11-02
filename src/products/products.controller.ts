@@ -7,6 +7,7 @@ import {
   Delete,
   Put,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { Product } from './entities/product.entity';
@@ -19,8 +20,12 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() createProductDto: CreateProductDto): Promise<Product> {
-    return this.productsService.create(createProductDto);
+  create(
+    @Request() req,
+    @Body() createProductDto: CreateProductDto,
+  ): Promise<Product> {
+    const userId = req.user.sub;
+    return this.productsService.create(createProductDto, userId);
   }
 
   @UseGuards(JwtAuthGuard)

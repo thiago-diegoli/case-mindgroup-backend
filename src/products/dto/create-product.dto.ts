@@ -3,7 +3,7 @@ import { IsNotEmpty, IsString, IsOptional, IsNumber } from 'class-validator';
 export class CreateProductDto {
   @IsNotEmpty()
   @IsString()
-  name: string;
+  name?: string;
 
   @IsOptional()
   @IsString()
@@ -15,5 +15,5 @@ export class CreateProductDto {
 
   @IsNotEmpty()
   @IsNumber({maxDecimalPlaces: 2})
-  value: number;
+  value?: number;
 }

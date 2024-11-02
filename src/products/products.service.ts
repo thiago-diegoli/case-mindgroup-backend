@@ -3,16 +3,31 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
+import { UsersService } from '../users/users.service';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private productsRepository: Repository<Product>,
+    private usersService: UsersService,
   ) {}
 
-  async create(createProductDto: CreateProductDto): Promise<Product> {
-    const product = this.productsRepository.create(createProductDto);
+  async create(
+    createProductDto: CreateProductDto,
+    userId: number,
+  ): Promise<Product> {
+    const user = await this.usersService.findOneById(userId);
+
+    const product = this.productsRepository.create({
+      ...createProductDto,
+      user,
+      image: createProductDto.image
+        ? Buffer.from(createProductDto.image, 'base64')
+        : null,
+    });
+
     return this.productsRepository.save(product);
   }
 
@@ -26,9 +41,27 @@ export class ProductsService {
 
   async update(
     id: number,
-    updateProductDto: CreateProductDto,
+    updateProductDto: UpdateProductDto,
   ): Promise<Product> {
-    await this.productsRepository.update(id, updateProductDto);
+    const productToUpdate = await this.productsRepository.findOne({
+      where: { id },
+    });
+
+    if (!productToUpdate) {
+      throw new Error('Product not found');
+    }
+    const updateData: Partial<Product> = {};
+    if (updateProductDto.name) updateData.name = updateProductDto.name;
+    if (updateProductDto.description)
+      updateData.description = updateProductDto.description;
+    if (updateProductDto.value) updateData.value = updateProductDto.value;
+
+    if (updateProductDto.image) {
+      updateData.image = Buffer.from(updateProductDto.image, 'base64');
+    }
+
+    await this.productsRepository.update(id, updateData);
+
     return this.findOne(id);
   }
 

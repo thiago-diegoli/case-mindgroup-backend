@@ -12,8 +12,8 @@ export class Product {
   @Column()
   description: string;
 
-  @Column()
-  image: string;
+  @Column({ type: 'longblob', nullable: true })
+  image?: Buffer;
 
   @Column('decimal')
   value: number;
