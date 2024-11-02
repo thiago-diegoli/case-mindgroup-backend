@@ -16,4 +16,7 @@ export class UpdateProductDto {
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   value?: number;
+
+  @IsNumber()
+  userId?: number;
 }

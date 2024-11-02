@@ -1,4 +1,8 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
@@ -52,7 +56,6 @@ export class ProductsService {
   async update(
     id: number,
     updateProductDto: UpdateProductDto,
-    userId: number,
   ): Promise<Product> {
     const productToUpdate = await this.productsRepository.findOne({
       where: { id },
@@ -63,13 +66,16 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
 
-    if (productToUpdate.user.id !== userId) {
-      throw new ForbiddenException('You are not authorized to update this product');
+    if (productToUpdate.user.id !== updateProductDto.userId) {
+      console.log(productToUpdate.user.id);
+      console.log(updateProductDto);
+      throw new ForbiddenException(`${productToUpdate.user.id} !== ${updateProductDto.userId}`);
     }
 
     const updateData: Partial<Product> = {};
     if (updateProductDto.name) updateData.name = updateProductDto.name;
-    if (updateProductDto.description) updateData.description = updateProductDto.description;
+    if (updateProductDto.description)
+      updateData.description = updateProductDto.description;
     if (updateProductDto.value) updateData.value = updateProductDto.value;
 
     if (updateProductDto.image) {
@@ -86,15 +92,17 @@ export class ProductsService {
       where: { id },
       relations: ['user'],
     });
-  
+
     if (!product) {
       throw new NotFoundException('Product not found');
     }
-  
+
     if (product.user.id !== userId) {
-      throw new ForbiddenException('You are not authorized to delete this product');
+      throw new ForbiddenException(
+        'You are not authorized to delete this product',
+      );
     }
-  
+
     await this.productsRepository.delete(id);
   }
 }

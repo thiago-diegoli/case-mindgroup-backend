@@ -50,7 +50,7 @@ export class ProductsController {
   ): Promise<Product> {
     const userId = req.user.id; // Obtém o userId do token JWT
 
-    return this.productsService.update(+id, updateProductDto, userId);
+    return this.productsService.update(+id, updateProductDto);
   }
 
   @UseGuards(JwtAuthGuard)
