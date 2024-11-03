@@ -45,6 +45,7 @@ export class ProductsService {
       description: product.description,
       value: product.value,
       image: product.image,
+      quantity: product.quantity,
       userId: product.user.id,
     }));
   }
